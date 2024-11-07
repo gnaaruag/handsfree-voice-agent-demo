@@ -7,7 +7,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  margin: 0px 8px;
+  margin: px 16px;
   & > div {
     flex-shrink: 0;
   }
@@ -31,6 +31,10 @@
         height: 24px;
       }
     }
+    .rotate-canvas {
+      transition: transform 0.5s ease; /* Smooth rotation over 0.5 seconds */
+      transform: rotate(90deg); /* Adjust the degree as needed */
+    }
   }
 
   .content-main {
@@ -41,7 +45,7 @@
     overflow: hidden;
     margin-bottom: 24px;
     .content-block {
-      position: relative;
+      height: 100%;
       display: flex;
       flex-direction: column;
       max-height: 100%;
@@ -66,6 +70,8 @@
       }
     }
     .content-right {
+      flex-grow: 1;
+      height: 100%;
       width: 50%; 
       flex-shrink: 0;
       display: flex;

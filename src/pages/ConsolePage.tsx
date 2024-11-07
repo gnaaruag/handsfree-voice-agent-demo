@@ -8,9 +8,25 @@
  * This will also require you to set OPENAI_API_KEY= in a `.env` file
  * You can run it with `npm run relay`, in parallel with `npm start`
  */
+
+import * as Icons from 'lucide-react';
+
+type LucideIconProps = {
+  iconName: keyof typeof Icons;
+};
+
+const LucideIcon: React.FC<LucideIconProps> = ({ iconName }) => {
+  // Retrieve the specific icon component from the Icons object
+  const IconComponent = Icons[iconName] as React.ElementType;
+
+  return <div>{IconComponent ? <IconComponent /> : <p>Icon not found</p>}</div>;
+};
 const LOCAL_RELAY_SERVER_URL: string =
   process.env.REACT_APP_LOCAL_RELAY_SERVER_URL || '';
 
+import Car from '../components/car/Car';
+import { Canvas } from '@react-three/fiber';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useEffect, useRef, useCallback, useState } from 'react';
 
 import { RealtimeClient } from '@openai/realtime-api-beta';
@@ -22,7 +38,6 @@ import { WavRenderer } from '../utils/wav_renderer';
 import { X, Edit, Zap, ArrowUp, ArrowDown } from 'react-feather';
 import { Button } from '../components/button/Button';
 import { Toggle } from '../components/toggle/Toggle';
-
 import './ConsolePage.scss';
 
 /**
@@ -49,8 +64,54 @@ export function ConsolePage() {
     localStorage.setItem('tmp::voice_api_key', apiKey);
   }
 
-  const [queryResults, setQueryResults] = useState<string[]>([]);  // Add this state for storing results
-  
+  const colors = [
+    { name: 'Pristine White', color: '#FFFFFF' },
+    { name: 'Empowered Oxide', color: '#B0B0B0' },
+    { name: 'Pure Grey', color: '#7F7F7F' },
+    { name: 'Virtual Sunrise', color: '#3A7FC4' },
+    { name: 'Flame Red', color: '#FF4500' },
+  ];
+
+  const specList = [
+    {
+      name: '45 kWh High energy density Lithium ion battery pack',
+      icon: 'BatteryFull',
+    },
+    { name: 'Permanent Magnet Synchronous Motor', icon: 'Magnet' },
+    { name: '7.2 kW AC Fast Charger Unit', icon: 'PlugZap' },
+    { name: 'Motor 110 kW and Torque 215 Nm', icon: 'Cog' },
+    { name: '5 Seats', icon: 'User' },
+  ];
+
+  const accessList = [
+    {
+      name: 'HD Camera & sensor based reverse park assist',
+      icon: 'Webcam',
+    },
+    {
+      name: 'Fully Automatic Temperature Control',
+      icon: 'ThermometerSnowflake',
+    },
+    { name: '7.2 kW AC Fast Charger Unit', icon: 'PlugZap' },
+    { name: 'Alexa Voice Assistant', icon: 'BotMessageSquare' },
+    { name: 'Driver Doze-off Alert', icon: 'TriangleAlert' },
+  ];
+
+  const powerList = [
+    {
+      name: 'Creative 45',
+      icon: 'MoveRight',
+    },
+    { name: 'Accomplished 45', icon: 'MoveRight' },
+    { name: 'Accomplished 55', icon: 'MoveRight' },
+    { name: 'Accomplished+ S 45', icon: 'MoveRight' },
+    { name: 'Accomplished+ S 55', icon: 'MoveRight' },
+    { name: 'Empowered+ 55', icon: 'MoveRight' },
+    { name: 'Empowered+ A 55', icon: 'MoveRight' },
+  ];
+
+  const [queryResults, setQueryResults] = useState<string[]>([]); // Add this state for storing results
+
   /**
    * Instantiate:
    * - WavRecorder (speech input)
@@ -95,6 +156,7 @@ export function ConsolePage() {
    */
   const [items, setItems] = useState<ItemType[]>([]);
   const [realtimeEvents, setRealtimeEvents] = useState<RealtimeEvent[]>([]);
+
   const [expandedEvents, setExpandedEvents] = useState<{
     [key: string]: boolean;
   }>({});
@@ -135,6 +197,119 @@ export function ConsolePage() {
     }
   }, []);
 
+  let rotationAngle = 0;
+
+  function rotateCanvas() {
+    console.log('rotate')
+    const canvas = document.querySelector('canvas'); // Select the canvas element
+
+    if (canvas) {
+      rotationAngle = (rotationAngle + 90) % 360; // Increase the angle by 90 degrees
+      canvas.style.transform = `rotate(${rotationAngle}deg)`; // Apply the rotation
+    }
+  }
+
+  const [highlightSpec, setHighlightSpec] = useState(true);
+  const [highlightColors, setHighlightColors] = useState(false);
+  const [highlightPower, setHighlightPower] = useState(false);
+  const [highlightAccessories, setHighlightAccessories] = useState(false);
+
+  const handleConversationActions = useCallback(() => {
+    // Check if any conversation item contains "ACTION: ___" in the transcript
+    const specHighlight = items.some((item) =>
+      item.formatted.transcript?.includes('ACTION: Spec')
+    );
+    const colorsHighlight = items.some((item) =>
+      item.formatted.transcript?.includes('ACTION: Colors')
+    );
+    const powerHighlight = items.some((item) =>
+      item.formatted.transcript?.includes('ACTION: Variants')
+    );
+    const accessoriesHighlight = items.some((item) =>
+      item.formatted.transcript?.includes('ACTION: Accessories')
+    );
+
+    const rotationTrigger = items.some((item) =>
+      item.formatted.transcript?.includes('ACTION: Rotation')
+    );
+
+    const recHighlight = items.some((item) =>
+      item.formatted.transcript?.includes('SUGGEST')
+    )
+
+    setHighlightSpec((prev) => {
+      if (!prev && specHighlight) {
+        document
+          .getElementById('specifications')
+          ?.scrollIntoView({ behavior: 'smooth' });
+      }
+      return prev || specHighlight;
+    });
+    if (rotationTrigger) {
+      rotateCanvas();
+    }
+    setHighlightColors((prev) => {
+      if (!prev && colorsHighlight) {
+        document
+          .getElementById('colors')
+          ?.scrollIntoView({ behavior: 'smooth' });
+      }
+      return prev || colorsHighlight;
+    });
+    setHighlightAccessories((prev) => {
+      if (!prev && accessoriesHighlight) {
+        document
+          .getElementById('accessories')
+          ?.scrollIntoView({ behavior: 'smooth' });
+      }
+      return prev || accessoriesHighlight;
+    });
+    setHighlightPower((prev) => {
+      if (!prev && powerHighlight) {
+        document
+          .getElementById('variants')
+          ?.scrollIntoView({ behavior: 'smooth' });
+      }
+      return prev || powerHighlight;
+
+    });
+  }, [items]);
+
+  useEffect(() => {
+    handleConversationActions();
+  }, [items]);
+
+
+
+  useEffect(() => {
+    if (highlightSpec) {
+      document
+        .getElementById('specifications')
+        ?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [highlightSpec]);
+
+  useEffect(() => {
+    if (highlightColors) {
+      document.getElementById('colors')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [highlightColors]);
+
+  useEffect(() => {
+    if (highlightPower) {
+      document
+        .getElementById('variants')
+        ?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [highlightPower]);
+
+  useEffect(() => {
+    if (highlightAccessories) {
+      document
+        .getElementById('accessories')
+        ?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [highlightAccessories]);
   /**
    * Connect to conversation:
    * WavRecorder taks speech input, WavStreamPlayer output, client is API client
@@ -155,6 +330,10 @@ export function ConsolePage() {
 
     // Connect to audio output
     await wavStreamPlayer.connect();
+
+    client.updateSession({
+      turn_detection: { type: 'server_vad' },
+    });
 
     // Connect to realtime API
     await client.connect();
@@ -354,7 +533,7 @@ export function ConsolePage() {
 
     // Set instructions
     client.updateSession({ instructions: instructions });
-    client.updateSession({ voice: 'echo'})
+    client.updateSession({ voice: 'echo' });
     // Set transcription, otherwise we don't get user transcriptions back
     client.updateSession({ input_audio_transcription: { model: 'whisper-1' } });
 
@@ -362,7 +541,8 @@ export function ConsolePage() {
     client.addTool(
       {
         name: 'query_db',
-        description: 'Queries the knowledgebase stored in the vector DB to retrieve relevant and specific context.',
+        description:
+          'Queries the knowledgebase stored in the vector DB to retrieve relevant and specific context.',
         parameters: {
           type: 'object',
           properties: {
@@ -383,9 +563,9 @@ export function ConsolePage() {
             },
             body: JSON.stringify({ query }),
           });
-    
+
           const data = await response.json();
-          setQueryResults(data.results);  // Update the state with query results
+          setQueryResults(data.results); // Update the state with query results
           return data.results;
         } catch (error) {
           console.error('Error querying database:', error);
@@ -448,7 +628,7 @@ export function ConsolePage() {
       <div className="content-top">
         <div className="content-title">
           <img src="/openai-logomark.svg" />
-          <span>Realtime RAG Assistant - Prepared By Adam Lucek</span>
+          <span>Curvv.ev AI sales experience</span>
         </div>
         <div className="content-api-key">
           {!LOCAL_RELAY_SERVER_URL && (
@@ -462,194 +642,262 @@ export function ConsolePage() {
           )}
         </div>
       </div>
-      <div className="content-main">
-        <div className="content-logs">
-          <div className="content-block events">
-            <div className="visualization">
-              <div className="visualization-entry client">
-                <canvas ref={clientCanvasRef} />
-              </div>
-              <div className="visualization-entry server">
-                <canvas ref={serverCanvasRef} />
-              </div>
-            </div>
-            <div className="content-block-title">events</div>
-            <div className="content-block-body" ref={eventsScrollRef}>
-              {!realtimeEvents.length && `awaiting connection...`}
-              {realtimeEvents.map((realtimeEvent, i) => {
-                const count = realtimeEvent.count;
-                const event = { ...realtimeEvent.event };
-                if (event.type === 'input_audio_buffer.append') {
-                  event.audio = `[trimmed: ${event.audio.length} bytes]`;
-                } else if (event.type === 'response.audio.delta') {
-                  event.delta = `[trimmed: ${event.delta.length} bytes]`;
-                }
-                return (
-                  <div className="event" key={event.event_id}>
-                    <div className="event-timestamp">
-                      {formatTime(realtimeEvent.time)}
-                    </div>
-                    <div className="event-details">
-                      <div
-                        className="event-summary"
-                        onClick={() => {
-                          // toggle event details
-                          const id = event.event_id;
-                          const expanded = { ...expandedEvents };
-                          if (expanded[id]) {
-                            delete expanded[id];
-                          } else {
-                            expanded[id] = true;
-                          }
-                          setExpandedEvents(expanded);
-                        }}
-                      >
-                        <div
-                          className={`event-source ${
-                            event.type === 'error'
-                              ? 'error'
-                              : realtimeEvent.source
-                          }`}
-                        >
-                          {realtimeEvent.source === 'client' ? (
-                            <ArrowUp />
-                          ) : (
-                            <ArrowDown />
-                          )}
-                          <span>
-                            {event.type === 'error'
-                              ? 'error!'
-                              : realtimeEvent.source}
-                          </span>
-                        </div>
-                        <div className="event-type">
-                          {event.type}
-                          {count && ` (${count})`}
-                        </div>
-                      </div>
-                      {!!expandedEvents[event.event_id] && (
-                        <div className="event-payload">
-                          {JSON.stringify(event, null, 2)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          <div className="content-block conversation">
-            <div className="content-block-title">conversation</div>
-            <div className="content-block-body" data-conversation-content>
-              {!items.length && `awaiting connection...`}
-              {items.map((conversationItem, i) => {
-                return (
-                  <div className="conversation-item" key={conversationItem.id}>
-                    <div className={`speaker ${conversationItem.role || ''}`}>
-                      <div>
-                        {(
-                          conversationItem.role || conversationItem.type
-                        ).replaceAll('_', ' ')}
-                      </div>
-                      <div
-                        className="close"
-                        onClick={() =>
-                          deleteConversationItem(conversationItem.id)
-                        }
-                      >
-                        <X />
-                      </div>
-                    </div>
-                    <div className={`speaker-content`}>
-                      {/* tool response */}
-                      {conversationItem.type === 'function_call_output' && (
-                        <div>{conversationItem.formatted.output}</div>
-                      )}
-                      {/* tool call */}
-                      {!!conversationItem.formatted.tool && (
-                        <div>
-                          {conversationItem.formatted.tool.name}(
-                          {conversationItem.formatted.tool.arguments})
-                        </div>
-                      )}
-                      {!conversationItem.formatted.tool &&
-                        conversationItem.role === 'user' && (
-                          <div>
-                            {conversationItem.formatted.transcript ||
-                              (conversationItem.formatted.audio?.length
-                                ? '(awaiting transcript)'
-                                : conversationItem.formatted.text ||
-                                  '(item sent)')}
-                          </div>
-                        )}
-                      {!conversationItem.formatted.tool &&
-                        conversationItem.role === 'assistant' && (
-                          <div>
-                            {conversationItem.formatted.transcript ||
-                              conversationItem.formatted.text ||
-                              '(truncated)'}
-                          </div>
-                        )}
-                      {conversationItem.formatted.file && (
-                        <audio
-                          src={conversationItem.formatted.file.url}
-                          controls
-                        />
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          <div className="content-actions">
-            <Toggle
-              defaultValue={false}
-              labels={['manual', 'vad']}
-              values={['none', 'server_vad']}
-              onChange={(_, value) => changeTurnEndType(value)}
-            />
-            <div className="spacer" />
-            {isConnected && canPushToTalk && (
-              <Button
-                label={isRecording ? 'release to send' : 'push to talk'}
-                buttonStyle={isRecording ? 'alert' : 'regular'}
-                disabled={!isConnected || !canPushToTalk}
-                onMouseDown={startRecording}
-                onMouseUp={stopRecording}
-              />
-            )}
-            <div className="spacer" />
+      <div className="content">
+        <div className="content-main">
+          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+            {/* Car canvas */}
+            <Car />
+
+            {/* Button overlayed on top of Car canvas */}
             <Button
-              label={isConnected ? 'disconnect' : 'connect'}
+              label={
+                isConnected
+                  ? 'End Conversation'
+                  : 'Talk to our AI Sales Assistant'
+              }
               iconPosition={isConnected ? 'end' : 'start'}
               icon={isConnected ? X : Zap}
               buttonStyle={isConnected ? 'regular' : 'action'}
               onClick={
                 isConnected ? disconnectConversation : connectConversation
               }
+              style={{
+                position: 'absolute', // Absolute positioning to overlay on Car
+                top: '10px', // Adjust top positioning
+                left: '10px', // Adjust right positioning
+                zIndex: 10, // Ensure it appears on top
+                padding: '1.5em 3em',
+              }}
             />
           </div>
         </div>
         <div className="content-right">
-          <div className="content-block map">
-            <div className="content-block-body full">
-              <div className="sidebar">
-                <h3>Retrieved Documents</h3>
-                <div className="sidebar-content">
-                  {queryResults.length > 0 ? (
-                    <ul>
-                      {queryResults.map((result, index) => (
-                        <li key={index}>{result}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p>No results yet. Results retrieved from Voice Assistant will show up here.</p>
-                  )}
-                </div>
-              </div>
+          <div
+            className="sidebar"
+            style={{
+              maxHeight: '650px', // Set the desired max height
+              overflowY: 'auto', // Enable vertical scrolling for the entire sidebar
+              border: '1px solid #ccc', // Optional: border for clarity
+              padding: '10px', // Optional: padding for spacing
+              marginRight: '1em',
+            }}
+          >
+            <p style={{ fontSize: '2em' }}>TATA Motors Curvv.ev</p>
+            <div
+              className="sidebar-item"
+              id="specifications"
+              onClick={() => setHighlightSpec(!highlightSpec)}
+              style={{
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              Specifications
+              {highlightSpec ? (
+                <ChevronUp style={{ marginLeft: 'auto' }} />
+              ) : (
+                <ChevronDown style={{ marginLeft: 'auto' }} />
+              )}
             </div>
+            {highlightSpec && (
+              <div className="sidebar-content" style={{ overflowY: 'visible' }}>
+                {specList.map((item, index) => {
+                  const iconName = item.icon as keyof typeof Icons; // cast to icon type
+                  const isValidIcon = iconName in Icons; // check if it exists in Icons
+
+                  return (
+                    <div
+                      key={index}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '1.5em',
+                        margin: '0.6em 0',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '0.25em',
+                        marginBottom: '0.5em',
+                      }}
+                    >
+                      {isValidIcon ? (
+                        <LucideIcon iconName={iconName} />
+                      ) : (
+                        <span style={{ color: 'red' }}>Icon not found</span>
+                      )}
+                      <span style={{ marginLeft: '10px' }}>{item.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div
+              className="sidebar-item"
+              id="colors"
+              onClick={() => setHighlightColors(!highlightColors)}
+              style={{
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              Colors
+              {highlightColors ? (
+                <ChevronUp style={{ marginLeft: 'auto' }} />
+              ) : (
+                <ChevronDown style={{ marginLeft: 'auto' }} />
+              )}
+            </div>
+            {highlightColors && (
+              <div
+                className="sidebar-content"
+                style={{
+                  overflowY: 'visible',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  alignContent: 'center',
+                  width: '80%',
+                }}
+              >
+                {colors.map((item, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '1.5em',
+                      margin: '0.6em 0',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: '0.25em',
+                      marginBottom: '0.5em',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        borderRadius: '50%',
+                        backgroundColor: item.color,
+                        marginRight: '10px',
+                        border: '1px solid #000',
+                      }}
+                    ></div>
+                    <span>{item.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div
+              className="sidebar-item"
+              id="variants"
+              onClick={() => setHighlightPower(!highlightPower)}
+              style={{
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              Variants
+              {highlightPower ? (
+                <ChevronUp style={{ marginLeft: 'auto' }} />
+              ) : (
+                <ChevronDown style={{ marginLeft: 'auto' }} />
+              )}
+            </div>
+            {highlightPower && (
+              <div
+                className="sidebar-content"
+                style={{ overflowY: 'visible', width: '80%' }}
+              >
+                {powerList.map((item, index) => {
+                  const iconName = item.icon as keyof typeof Icons; // cast to icon type
+                  const isValidIcon = iconName in Icons; // check if it exists in Icons
+
+                  return (
+                    <div
+                      key={index}
+                      id={item.name}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '1em',
+                        margin: '1em 1.5em',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '0.25em',
+                        marginBottom: '0.5em',
+                        width: '80%',
+                      }}
+                    >
+                      {isValidIcon ? (
+                        <LucideIcon iconName={iconName} />
+                      ) : (
+                        <span style={{ color: 'red' }}>Icon not found</span>
+                      )}
+                      <span style={{ marginLeft: '10px' }}>{item.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div
+              className="sidebar-item"
+              id="accessories"
+              onClick={() => setHighlightAccessories(!highlightAccessories)}
+              style={{
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              Accessories
+              {highlightAccessories ? (
+                <ChevronUp style={{ marginLeft: 'auto' }} />
+              ) : (
+                <ChevronDown style={{ marginLeft: 'auto' }} />
+              )}
+            </div>
+            {highlightAccessories && (
+              <div className="sidebar-content" style={{ overflowY: 'visible' }}>
+                {accessList.map((item, index) => {
+                  const iconName = item.icon as keyof typeof Icons; // cast to icon type
+                  const isValidIcon = iconName in Icons; // check if it exists in Icons
+
+                  return (
+                    <div
+                      key={index}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '1.5em',
+                        margin: '0.6em 0',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '0.25em',
+                        marginBottom: '0.5em',
+                      }}
+                    >
+                      {isValidIcon ? (
+                        <LucideIcon iconName={iconName} />
+                      ) : (
+                        <span style={{ color: 'red' }}>Icon not found</span>
+                      )}
+                      <span style={{ marginLeft: '10px' }}>{item.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
+
+          {/* <div className="content-block map">
+            <div className="content-block-body full">
+              
+              <div className="spacer" />
+              
+            </div> */}
+          <div className="spacer "></div>
         </div>
       </div>
     </div>
