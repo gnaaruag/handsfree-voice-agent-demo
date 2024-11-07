@@ -98,6 +98,7 @@ The Tata Curvv EV is available in the following variants:
   - Welcome & Goodbye Sequence
   - Charging Indicator
   - Frunk (Front Trunk)
+  - Very spacious boot
 
 - Interior and Comfort:
   - 26.03 cm (10.25") Digital Cockpit
@@ -251,6 +252,8 @@ The Tata Curvv EV is available in the following variants:
 - Vehicle-to-Vehicle (V2V) Charging
 - Vehicle-to-Load (V2L) Technology
 - 7.2 kW AC Fast Charger Unit
+- Extensive Charging Network that is distributed pan-India
+- Home charging solutions available
 
 # Pros
 
